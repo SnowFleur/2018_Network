@@ -8,14 +8,14 @@ void err_quit(const  char*);
 int main() {
 		/*윈도우 소켓 초기화*/
 		WSADATA wsa;
-		if(WSAStartup(MAKEWORD(2,1),&wsa)!=0)
+		if(WSAStartup(MAKEWORD(2,2),&wsa)!=0)
 			return 1;
 	
 
 
 	
 
-		WORD hi_bit = 0;
+		__int8 hi_bit = 0;
 		WORD low_bit = 0;
 
 		hi_bit = wsa.wVersion & 0xff;
@@ -31,7 +31,7 @@ int main() {
 	/*	std::cout <<static_cast<__int8>(hi_bit) << std::endl;
 		std::cout << static_cast<__int8>(low_bit) << std::endl;*/
 
-
+		__int8 a;
 
 		std::cout << "--------------------------------------" << std::endl;
 		std::cout << "--------------------------------------" << std::endl;
@@ -47,7 +47,7 @@ int main() {
 	
 		std::cout << hi_bit << "." << low_bit << std::endl;
 		//std::cout << wsa2.wVersion << std::endl;
-		std::cout << wsa2.wHighVersion << std::endl;
+		//std::cout << wsa2.wHighVersion << std::endl;
 		std::cout << wsa2.szDescription << std::endl;
 		std::cout << wsa2.szSystemStatus << std::endl;
 	
