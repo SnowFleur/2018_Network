@@ -6,10 +6,11 @@
 void GetIPAddr(char*);
 int main(int argc, char* argv[]) {
 	WSADATA wsa;
-	IN_ADDR addr;
 	HOSTENT* result = NULL;
 	if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
 		return 1;
+
+	GetIPAddr(const_cast<char*>("www.naver.com"));
 
 	if (argv[1]) {
 		GetIPAddr(argv[1]);
@@ -27,9 +28,10 @@ void GetIPAddr(char* name) {
 	for (auto subname = ptrHostent->h_aliases; *subname != NULL; ++subname)
 		std::cout<<"서브DNS:" << *subname << std::endl;
 
-	for (auto ip = ptrHostent->h_addr_list; *ip != NULL; ++ip) {
-
-		memcpy(&addr, *ip, ptrHostent->h_length);
-		std::cout << "IP주소" << inet_ntoa(addr) << std::endl;
+	for (int i = 0; ptrHostent->h_addr_list[i] != NULL; ++i) {
+			addr.s_addr = *(u_long *)ptrHostent->h_addr_list[i++];
+			printf("\tIPv4 Address #%d: %s\n", i, inet_ntoa(addr));
 	}
+
 }
+
