@@ -4,7 +4,7 @@
 #include<winsock2.h>
 #include<fstream>
 #define SERVERPORT 9000
-#define BUFSIZE 256
+#define BUFSIZE 516
 
 
 using ifstrem = std::ifstream;
@@ -56,12 +56,11 @@ int main() {
 	//통신에 사용할 변수
 	SOCKET client_socket;
 	SOCKADDR_IN client_addr;
-	ofstrem filedownload("copy.jpg");
+	ofstrem filedownload("copy.jpg", std::ios::binary);
 	int addrlen;
-	char buf[BUFSIZE + 1];
-	int len=0;
-	char* data=NULL;
-
+	char buf[BUFSIZE+1];
+	int len=0, ab;
+	unsigned int count;
 	while (1) {
 		//accept
 		addrlen = sizeof(client_addr);
@@ -73,11 +72,8 @@ int main() {
 		}
 
 		std::cout << "[TCP서버] 클라이언트접속 IP주소: " << inet_ntoa(client_addr.sin_addr) << " 포트번호: " << ntohs(client_addr.sin_port) << std::endl;
+		
 
-
-
-		//클라이언트와 데이터 통신
-		while (1) {
 			//데이터 받기 (고정길이)
 			retval = recvn(client_socket, reinterpret_cast<char*>(&len), sizeof(int), 0);
 			if (retval == SOCKET_ERROR) {
@@ -86,24 +82,47 @@ int main() {
 			}
 			else if (retval == 0)
 				break;
+				std::cout << "고정길이 크기" << retval << std::endl;
 
+			ab = len /BUFSIZE;
+			unsigned int per = ab;
+			while (ab) {
+				//데이터 받기 (가변길이)
+				retval = recvn(client_socket, buf, 
+					BUFSIZE, 0);
 
-			std::cout << "길이" << len << std::endl;
-			data = new char[len];
-			//데이터 받기 (가변길이)
-			retval = recvn(client_socket, data, len, 0);
+				if (retval == SOCKET_ERROR) {
+					std::cout << "recvn error" << std::endl;
+					break;
+				}
+				else if (retval == 0)
+					break;
 
-			if (retval == SOCKET_ERROR) {
-				std::cout << "recvn error" << std::endl;
-				break;
+				std::cout<<"가변길이 크기" << retval << std::endl;
+				
+				//filedownload << buf;
+
+				filedownload.write(buf, BUFSIZE);
+				--ab;
 			}
-			else if (retval == 0)
-				break;
-		
-			std::cout << "받았습니다." << retval << std::endl;
 
+
+
+		//남은길이
+			count = len - (per * BUFSIZE);
+		retval = recvn(client_socket, buf, count, 0);
+
+		if (retval == SOCKET_ERROR) {
+			std::cout << "recvn error" << std::endl;
+			break;
 		}
-		filedownload << data;
+		std::cout << "남은길이 크기" << retval << std::endl;
+
+		filedownload.write(buf, count);
+
+
+
+
 		filedownload.close();
 
 
