@@ -7,6 +7,12 @@
 #define BUFSIZE 516
 
 
+struct FileInfor {
+	char name[255];
+	DWORD fileSize;
+
+};
+
 using ifstrem = std::ifstream;
 using ofstrem = std::ofstream;
 
@@ -14,7 +20,7 @@ int recvn(SOCKET, char*, int, int);
 int main() {
 
 	int retval;
-
+	FileInfor file;
 	ifstrem open;
 
 
@@ -56,60 +62,66 @@ int main() {
 	//통신에 사용할 변수
 	SOCKET client_socket;
 	SOCKADDR_IN client_addr;
-	ofstrem filedownload("copy.jpg", std::ios::binary);
+	
+
+
 	int addrlen;
-	char buf[BUFSIZE+1];
-	int len=0, ab;
+	char buf[BUFSIZE + 1];
+	int len = 0, ab;
 	unsigned int count;
 	while (1) {
 		//accept
 		addrlen = sizeof(client_addr);
-		client_socket = accept(listen_sock , reinterpret_cast<SOCKADDR*>(&client_addr), &addrlen);
+		client_socket = accept(listen_sock, reinterpret_cast<SOCKADDR*>(&client_addr), &addrlen);
 
-		if (client_socket==INVALID_SOCKET) {
+		if (client_socket == INVALID_SOCKET) {
 			std::cout << "accept error" << std::endl;
 			break;
 		}
 
 		std::cout << "[TCP서버] 클라이언트접속 IP주소: " << inet_ntoa(client_addr.sin_addr) << " 포트번호: " << ntohs(client_addr.sin_port) << std::endl;
-		
 
-			//데이터 받기 (고정길이)
-			retval = recvn(client_socket, reinterpret_cast<char*>(&len), sizeof(int), 0);
+
+		//데이터 받기 (고정길이)
+		retval = recvn(client_socket, reinterpret_cast<char*>(&file), sizeof(file), 0);
+		if (retval == SOCKET_ERROR) {
+			std::cout << "recvn error" << std::endl;
+			break;
+		}
+		else if (retval == 0)
+			break;
+
+
+		std::cout << "받은 파일이름:" << file.name << std::endl;
+		std::cout << "받은 파일크기:" << file.fileSize << std::endl;
+
+
+		ab = len / BUFSIZE;
+		unsigned int per = ab;
+		while (ab) {
+			//데이터 받기 (가변길이)
+			retval = recvn(client_socket, buf,
+				BUFSIZE, 0);
+
 			if (retval == SOCKET_ERROR) {
 				std::cout << "recvn error" << std::endl;
 				break;
 			}
 			else if (retval == 0)
 				break;
-				std::cout << "고정길이 크기" << retval << std::endl;
 
-			ab = len /BUFSIZE;
-			unsigned int per = ab;
-			while (ab) {
-				//데이터 받기 (가변길이)
-				retval = recvn(client_socket, buf, 
-					BUFSIZE, 0);
+			std::cout << "가변길이 크기" << retval << std::endl;
 
-				if (retval == SOCKET_ERROR) {
-					std::cout << "recvn error" << std::endl;
-					break;
-				}
-				else if (retval == 0)
-					break;
 
-				std::cout<<"가변길이 크기" << retval << std::endl;
-				
-				//filedownload << buf;
-
-				filedownload.write(buf, BUFSIZE);
-				--ab;
-			}
+			ofstrem filedownload(file.name, std::ios::binary);
+			filedownload.write(buf, BUFSIZE);
+			--ab;
+		}
 
 
 
 		//남은길이
-			count = len - (per * BUFSIZE);
+		count = len - (per * BUFSIZE);
 		retval = recvn(client_socket, buf, count, 0);
 
 		if (retval == SOCKET_ERROR) {
@@ -128,8 +140,8 @@ int main() {
 
 
 		std::cout << "TCP" << inet_ntoa(client_addr.sin_addr) << ":" << ntohs(client_addr.sin_port) << "]" << std::endl;
-	
-	
+
+
 	}
 
 	//closesocket
