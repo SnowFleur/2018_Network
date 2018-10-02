@@ -5,7 +5,7 @@
 #include<fstream>
 #define SERVERPORT 9000
 #define SERVERIP "127.0.0.1"
-#define BUFSIZE 516
+#define BUFSIZE 1400
 
 
 using ifstrem = std::ifstream;
@@ -82,44 +82,11 @@ int main() {
 	std::cout << "보낸 파일이름:" << file.name << std::endl;
 	std::cout << "보낸 파일크기:" << file.fileSize << std::endl;
 
-	/*가변전송*/
 
-	/*
-	DWORD start;
-	DWORD end;
-		//std::cout << "전송:" << (start - end) * 100 / start << std::endl;
-		//end--;
-	전송 속도(KB/sec) = 현재까지 전송된 파일크기 /  현재까지 전송이 진행된 시간(TotalSeconds);
+	int count = file.fileSize / BUFSIZE;
+	int saveCount = count;
+	while (count) {
 
-	start = end = fileSize / BUFSIZE;
-	*/
-
-
-	int i = 0, j = 0;
-	static int count = 0;
-	char data;
-	//while (uploadFile >> data) {
-
-	//	if (data != EOF)
-	//	buf[i++] = data;
-
-	//	if (i == BUFSIZE) {
-	//	//	buf[i] = '\0';
-	//		retval = send(sock, buf, BUFSIZE, 0);
-	//		std::cout << "send"<<retval<< std::endl;
-	//		if (retval == SOCKET_ERROR) {
-	//			std::cout << "가변 오류" << std::endl;
-	//			break;
-	//		}
-	//		i = 0;
-	//	}
-
-	//}
-
-
-
-	while (1) {
-		std::cout << retval << std::endl;
 		if (retval == 0)
 			break;
 
@@ -129,14 +96,24 @@ int main() {
 			std::cout << "가변 오류" << std::endl;
 			exit(1);
 		}
+		std::cout << "진행률"<<(saveCount-count)*100/saveCount << std::endl;
 
-
-
+		--count;
 	}
 
+	//남은 크기 전송
+	 int remainData= file.fileSize-(saveCount*BUFSIZE) ;
 
 
+	uploadFile.read(buf, remainData);
+	retval = send(sock, buf, remainData, 0);
+	if (retval == SOCKET_ERROR) {
+		std::cout << "가변 오류" << std::endl;
+		exit(1);
+	}
+	 std::cout << "진행률100%" << std::endl;
 
+	
 	closesocket(sock);
 	WSACleanup();
 
