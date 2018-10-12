@@ -40,6 +40,8 @@ int main(int argc, char* argv[]) {
 				std::cout << "IP :" << inet_ntoa(server_addr.sin_addr) << " " << "포트번호:" << ntohs(server_addr.sin_port) << " " << "상태:LISTENING" << std::endl;
 			else
 				std::cout << "IP :" << inet_ntoa(server_addr.sin_addr) << " " << "포트번호: " << ntohs(server_addr.sin_port) << " " << "상태: not LISTENING" << std::endl;
+		
+			
 		}
 		WSACleanup();
 	}

@@ -10,30 +10,48 @@ num 변수의 초깃값을 충분히 크게 하면 MyThread()함수가 종류하지 않은 상태에서 Wai
 #include<Windows.h>
 
 
-int sum = 0;
+DWORD sum = 0;
 DWORD WINAPI MyThread(LPVOID);
 
 int main() {
-	int num = 100;
+
+	int num = 9999999;
+	DWORD retval = 0;
+	HANDLE hThread = CreateThread(NULL, 0, MyThread, reinterpret_cast<LPVOID>(num), CREATE_SUSPENDED, NULL);
+
+	if (hThread == NULL)
+		return 1;
+
+	std::cout << "스레드 실행전 계산결과" << sum << std::endl;
+
+	ResumeThread(hThread);
+
+	while (WAIT_TIMEOUT== WaitForSingleObject(hThread, 1) ){
+		std::cout << "*" << std::endl;
 	
-	int* iptr = NULL;
-
-	iptr = reinterpret_cast<int*>(num);
+	}
 
 
 
-	printf("%d\n",num);
-	printf("%d\n",iptr);
+	/*retval=WaitForSingleObject(hThread,1);
 
-	std::cout << &iptr << std::endl;
+	if (retval == WAIT_TIMEOUT) {
+		std::cout << "*" << std::endl;
+	}
+*/
 
-//	HANDLE hTread = CreateThread(NULL, 0, MyThread, reinterpret_cast<LPVOID>(num), 0, NULL);
+	std::cout << "스레드 실행후 계산결과" << sum << std::endl;
 
 
 	system("pause");
 	return 0;
 }
 DWORD WINAPI MyThread(LPVOID arg) {
+	int num = reinterpret_cast<int>(arg);
 
+	for (int i = 1; i <= num; i++) 
+		sum += i;
+
+	return 0;
 }
 
