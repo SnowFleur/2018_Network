@@ -15,14 +15,12 @@ vector vThread;
 
 DWORD WINAPI Server(LPVOID);
 int recvn(SOCKET, char*, int, int);
-
 struct FileInfor {
 	char name[255];
 	DWORD fileSize;
 
 };
 
-HANDLE FileEvent;
 int FileCount = 0;
 int FileMaxCount = 0;
 
@@ -86,7 +84,6 @@ int main() {
 	return 0;
 }
 DWORD WINAPI Server(LPVOID arg) {
-
 	SOCKET client_socket = reinterpret_cast<SOCKET>(arg);
 	SOCKADDR_IN client_addr;
 	int retval;
@@ -136,8 +133,6 @@ DWORD WINAPI Server(LPVOID arg) {
 				FileCount = 0;
 			}
 			LeaveCriticalSection(&cs);
-			//retval = WaitForMultipleObjects(vThread.size(), vThread.data(), true, INFINITE);
-			retval = WaitForSingleObject(FileEvent, INFINITE);
 			std::cout << "파일이름:" << file.name << "진행률" << (saveCount - count) * 100 / saveCount << "%" << std::endl;
 			ResetEvent(FileEvent);
 
