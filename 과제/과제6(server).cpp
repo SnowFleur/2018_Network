@@ -13,7 +13,6 @@ using vector = std::vector<HANDLE>;
 CRITICAL_SECTION cs;
 vector vThread;
 
-
 DWORD WINAPI Server(LPVOID);
 int recvn(SOCKET, char*, int, int);
 
@@ -27,16 +26,10 @@ HANDLE FileEvent;
 int FileCount = 0;
 int FileMaxCount = 0;
 
-
 int main() {
-
 	InitializeCriticalSection(&cs);
-
-
 	int retval;
-
 	FileEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-
 	WSADATA wsa;
 	if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
 		return 1;
@@ -62,12 +55,11 @@ int main() {
 		return 0;
 	}
 
-	//Åë½Å¿¡ »ç¿ëÇÒ º¯¼ö
+	//í†µì‹ ì— ì‚¬ìš©í•  ë³€ìˆ˜
 	SOCKET client_socket;
 	SOCKADDR_IN client_addr;
 	HANDLE hThread;
 	int addrlen;
-
 
 	while (1) {
 		//accept
@@ -83,9 +75,7 @@ int main() {
 		vThread.push_back(hThread);
 
 		FileMaxCount++;
-		std::cout << "[TCP¼­¹ö] Å¬¶óÀÌ¾ğÆ®Á¢¼Ó IPÁÖ¼Ò: " << inet_ntoa(client_addr.sin_addr) << " Æ÷Æ®¹øÈ£: " << ntohs(client_addr.sin_port) << std::endl;
-
-
+		std::cout << "[TCPì„œë²„] í´ë¼ì´ì–¸íŠ¸ì ‘ì† IPì£¼ì†Œ: " << inet_ntoa(client_addr.sin_addr) << " í¬íŠ¸ë²ˆí˜¸: " << ntohs(client_addr.sin_port) << std::endl;
 	}
 
 	//closesocket
@@ -109,17 +99,11 @@ DWORD WINAPI Server(LPVOID arg) {
 	unsigned int count;
 
 	addrlen = sizeof(client_addr);
-
 	getpeername(client_socket, reinterpret_cast<SOCKADDR*>(&client_addr), &addrlen);
 
-
 	while (1) {
-
-
-		//µ¥ÀÌÅÍ ¹Ş±â (°íÁ¤±æÀÌ)
+		//ë°ì´í„° ë°›ê¸° (ê³ ì •ê¸¸ì´)
 		retval = recvn(client_socket, reinterpret_cast<char*>(&file), sizeof(file), 0);
-
-
 		if (retval == SOCKET_ERROR) {
 			std::cout << "recvn error" << std::endl;
 			break;
@@ -127,33 +111,23 @@ DWORD WINAPI Server(LPVOID arg) {
 		else if (retval == 0)
 			break;
 
-		std::cout << "¹ŞÀº ÆÄÀÏÀÌ¸§:" << file.name << std::endl;
-		std::cout << "¹ŞÀº ÆÄÀÏÅ©±â:" << file.fileSize << std::endl;
+		std::cout << "ë°›ì€ íŒŒì¼ì´ë¦„:" << file.name << std::endl;
+		std::cout << "ë°›ì€ íŒŒì¼í¬ê¸°:" << file.fileSize << std::endl;
 
 		filedownload.open(file.name, std::ios::binary);
-
-
 		int count = file.fileSize / BUFSIZE;
 		int saveCount = count;
 
-
-
-
 		while (count) {
-
-			//µ¥ÀÌÅÍ ¹Ş±â (°¡º¯±æÀÌ)
+			//ë°ì´í„° ë°›ê¸° (ê°€ë³€ê¸¸ì´)
 			retval = recvn(client_socket, buf,
 				BUFSIZE, 0);
-
 			if (retval == SOCKET_ERROR) {
 				std::cout << "recvn error" << std::endl;
 				break;
 			}
 			else if (retval == 0)
 				break;
-
-
-
 
 			EnterCriticalSection(&cs);
 			FileCount++;
@@ -164,58 +138,28 @@ DWORD WINAPI Server(LPVOID arg) {
 			LeaveCriticalSection(&cs);
 			//retval = WaitForMultipleObjects(vThread.size(), vThread.data(), true, INFINITE);
 			retval = WaitForSingleObject(FileEvent, INFINITE);
-
-		
-
-			std::cout << "ÆÄÀÏÀÌ¸§:" << file.name << "ÁøÇà·ü" << (saveCount - count) * 100 / saveCount << "%" << std::endl;
+			std::cout << "íŒŒì¼ì´ë¦„:" << file.name << "ì§„í–‰ë¥ " << (saveCount - count) * 100 / saveCount << "%" << std::endl;
 			ResetEvent(FileEvent);
 
 			system("cls");
-
-
-
-			
-
-			//EnterCriticalSection(&cs);
-			//FileCount++;
-			//std::cout<<"ÆÄÀÏÀÌ¸§:"<<file.name<< "ÁøÇà·ü" << (saveCount - count) * 100 / saveCount<<"%"<< std::endl;
-			//if (FileCount == FileMaxCount) {
-			//	system("cls");
-			//	FileCount = 0;
-			//}
-			//LeaveCriticalSection(&cs);
-
-
 			filedownload.write(buf, BUFSIZE);
-
-
-	
 			--count;
 		}
 
-
-		//³²Àº±æÀÌ
+		//ë‚¨ì€ê¸¸ì´
 		int remainData = file.fileSize - (saveCount*BUFSIZE);
 		retval = recvn(client_socket, buf, remainData, 0);
-		std::cout << "ÁøÇà·ü100%" << std::endl;
-
+		std::cout << "ì§„í–‰ë¥ 100%" << std::endl;
 		EnterCriticalSection(&cs);
 		FileMaxCount--;
 		LeaveCriticalSection(&cs);
-
-
 		filedownload.write(buf, remainData);
 		filedownload.close();
-
-
-
+		
 		std::cout << "TCP" << inet_ntoa(client_addr.sin_addr) << ":" << ntohs(client_addr.sin_port) << "]" << std::endl;
 	}
-
 	return 0;
 }
-
-
 
 int recvn(SOCKET s, char* buf, int len, int flag) {
 	int received;
