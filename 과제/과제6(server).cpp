@@ -13,30 +13,21 @@ using vector = std::vector<HANDLE>;
 CRITICAL_SECTION cs;
 vector vThread;
 
-
 DWORD WINAPI Server(LPVOID);
 int recvn(SOCKET, char*, int, int);
-
 struct FileInfor {
 	char name[255];
 	DWORD fileSize;
 
 };
 
-HANDLE FileEvent;
 int FileCount = 0;
 int FileMaxCount = 0;
 
-
 int main() {
-
 	InitializeCriticalSection(&cs);
-
-
 	int retval;
-
 	FileEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-
 	WSADATA wsa;
 	if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
 		return 1;
@@ -62,12 +53,11 @@ int main() {
 		return 0;
 	}
 
-	//≈ÎΩ≈ø° ªÁøÎ«“ ∫Øºˆ
+	//ÌÜµÏã†Ïóê ÏÇ¨Ïö©Ìï† Î≥ÄÏàò
 	SOCKET client_socket;
 	SOCKADDR_IN client_addr;
 	HANDLE hThread;
 	int addrlen;
-
 
 	while (1) {
 		//accept
@@ -83,9 +73,7 @@ int main() {
 		vThread.push_back(hThread);
 
 		FileMaxCount++;
-		std::cout << "[TCPº≠πˆ] ≈¨∂Û¿Ãæ∆Æ¡¢º” IP¡÷º“: " << inet_ntoa(client_addr.sin_addr) << " ∆˜∆Æπ¯»£: " << ntohs(client_addr.sin_port) << std::endl;
-
-
+		std::cout << "[TCPÏÑúÎ≤Ñ] ÌÅ¥ÎùºÏù¥Ïñ∏Ìä∏Ï†ëÏÜç IPÏ£ºÏÜå: " << inet_ntoa(client_addr.sin_addr) << " Ìè¨Ìä∏Î≤àÌò∏: " << ntohs(client_addr.sin_port) << std::endl;
 	}
 
 	//closesocket
@@ -96,7 +84,6 @@ int main() {
 	return 0;
 }
 DWORD WINAPI Server(LPVOID arg) {
-
 	SOCKET client_socket = reinterpret_cast<SOCKET>(arg);
 	SOCKADDR_IN client_addr;
 	int retval;
@@ -109,17 +96,11 @@ DWORD WINAPI Server(LPVOID arg) {
 	unsigned int count;
 
 	addrlen = sizeof(client_addr);
-
 	getpeername(client_socket, reinterpret_cast<SOCKADDR*>(&client_addr), &addrlen);
 
-
 	while (1) {
-
-
-		//µ•¿Ã≈Õ πﬁ±‚ (∞Ì¡§±Ê¿Ã)
+		//Îç∞Ïù¥ÌÑ∞ Î∞õÍ∏∞ (Í≥†Ï†ïÍ∏∏Ïù¥)
 		retval = recvn(client_socket, reinterpret_cast<char*>(&file), sizeof(file), 0);
-
-
 		if (retval == SOCKET_ERROR) {
 			std::cout << "recvn error" << std::endl;
 			break;
@@ -127,33 +108,23 @@ DWORD WINAPI Server(LPVOID arg) {
 		else if (retval == 0)
 			break;
 
-		std::cout << "πﬁ¿∫ ∆ƒ¿œ¿Ã∏ß:" << file.name << std::endl;
-		std::cout << "πﬁ¿∫ ∆ƒ¿œ≈©±‚:" << file.fileSize << std::endl;
+		std::cout << "Î∞õÏùÄ ÌååÏùºÏù¥Î¶Ñ:" << file.name << std::endl;
+		std::cout << "Î∞õÏùÄ ÌååÏùºÌÅ¨Í∏∞:" << file.fileSize << std::endl;
 
 		filedownload.open(file.name, std::ios::binary);
-
-
 		int count = file.fileSize / BUFSIZE;
 		int saveCount = count;
 
-
-
-
 		while (count) {
-
-			//µ•¿Ã≈Õ πﬁ±‚ (∞°∫Ø±Ê¿Ã)
+			//Îç∞Ïù¥ÌÑ∞ Î∞õÍ∏∞ (Í∞ÄÎ≥ÄÍ∏∏Ïù¥)
 			retval = recvn(client_socket, buf,
 				BUFSIZE, 0);
-
 			if (retval == SOCKET_ERROR) {
 				std::cout << "recvn error" << std::endl;
 				break;
 			}
 			else if (retval == 0)
 				break;
-
-
-
 
 			EnterCriticalSection(&cs);
 			FileCount++;
@@ -162,60 +133,28 @@ DWORD WINAPI Server(LPVOID arg) {
 				FileCount = 0;
 			}
 			LeaveCriticalSection(&cs);
-			//retval = WaitForMultipleObjects(vThread.size(), vThread.data(), true, INFINITE);
-			retval = WaitForSingleObject(FileEvent, INFINITE);
-
-		
-
-			std::cout << "∆ƒ¿œ¿Ã∏ß:" << file.name << "¡¯«‡∑¸" << (saveCount - count) * 100 / saveCount << "%" << std::endl;
+			std::cout << "ÌååÏùºÏù¥Î¶Ñ:" << file.name << "ÏßÑÌñâÎ•†" << (saveCount - count) * 100 / saveCount << "%" << std::endl;
 			ResetEvent(FileEvent);
 
 			system("cls");
-
-
-
-			
-
-			//EnterCriticalSection(&cs);
-			//FileCount++;
-			//std::cout<<"∆ƒ¿œ¿Ã∏ß:"<<file.name<< "¡¯«‡∑¸" << (saveCount - count) * 100 / saveCount<<"%"<< std::endl;
-			//if (FileCount == FileMaxCount) {
-			//	system("cls");
-			//	FileCount = 0;
-			//}
-			//LeaveCriticalSection(&cs);
-
-
 			filedownload.write(buf, BUFSIZE);
-
-
-	
 			--count;
 		}
 
-
-		//≥≤¿∫±Ê¿Ã
+		//ÎÇ®ÏùÄÍ∏∏Ïù¥
 		int remainData = file.fileSize - (saveCount*BUFSIZE);
 		retval = recvn(client_socket, buf, remainData, 0);
-		std::cout << "¡¯«‡∑¸100%" << std::endl;
-
+		std::cout << "ÏßÑÌñâÎ•†100%" << std::endl;
 		EnterCriticalSection(&cs);
 		FileMaxCount--;
 		LeaveCriticalSection(&cs);
-
-
 		filedownload.write(buf, remainData);
 		filedownload.close();
-
-
-
+		
 		std::cout << "TCP" << inet_ntoa(client_addr.sin_addr) << ":" << ntohs(client_addr.sin_port) << "]" << std::endl;
 	}
-
 	return 0;
 }
-
-
 
 int recvn(SOCKET s, char* buf, int len, int flag) {
 	int received;
